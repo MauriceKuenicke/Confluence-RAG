@@ -1,0 +1,7 @@
+__pycache__
+airflow/data/*
+airflow/logs/*
+postgres_data/*
+.idea
+.env
+*.iml

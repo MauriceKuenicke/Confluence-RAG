@@ -1,0 +1,54 @@
+[project]
+name = "ConfluenceRAG"
+version = "v0.0.1"
+authors = [
+    { name="Maurice Künicke", email="..." },
+]
+description = "..."
+readme = "README.md"
+requires-python = ">=3.11"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["D", "I", "PL", "RUF", "F", "W"]
+ignore = ["D200", "D212", "D203", "D104", "D100", "D103", "PLR2004", "D205", "D415", "D400", "D401",
+    "W191", "PLR0913", "PLR0915", "RUF100", "D206", "PLR0912"]
+fixable = ["I001", "W292"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"test_*" = ["D102", "D101"]
+"echosphere/main.py" = ["F401", "F821"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+exclude = [
+    '^tests/.*',
+]
+strict = true
+ignore_missing_imports = true
+implicit_reexport = true
+
+
+[tool.coverage.run]
+source = ['....']
+omit = ['*/__init__.py', '/tests/*']
+
+[tool.coverage.report]
+exclude_also = [
+    "def test_",
+    "if self.debug",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]

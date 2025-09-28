@@ -1,0 +1,11 @@
+sqlalchemy
+python-dotenv
+airflow==2.10.0
+requests
+fastapi[standard]
+SQLAlchemy
+alembic
+cryptography
+pytest
+httpx
+pyjwt

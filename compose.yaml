@@ -1,0 +1,127 @@
+services:
+#############################################
+#              AIRFLOW SERVICE              #
+#############################################
+  airflow:
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
+    container_name: airflow-instance
+    depends_on:
+      airflow-db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      APP__DB__SQL_ALCHEMY_CONN: "postgresql+psycopg2://$APP_DB_USER:$APP_DB_PASSWORD@application-db:5432/$APP_DB_NAME"
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow_user:airflow_password@airflow-db:5432/airflow"
+      AIRFLOW__CORE__DEFAULT_TIMEZONE: "Europe/Berlin"
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
+      AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
+      AIRFLOW_HOME: "/opt/airflow"
+      PYTHONPATH: "/opt/airflow/src"
+      TZ: "Europe/Berlin"
+    volumes:
+      - airflow_logs:/opt/airflow/logs
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/plugins:/opt/airflow/plugins
+      - ./src:/opt/airflow/src
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - rag-network
+#############################################
+#            AIRFLOW BACKEND DB             #
+#############################################
+  airflow-db:
+    image: postgres:16-alpine
+    container_name: airflow-postgres
+    environment:
+      - POSTGRES_DB=airflow
+      - POSTGRES_USER=airflow_user
+      - POSTGRES_PASSWORD=airflow_password
+      - POSTGRES_HOST_AUTH_METHOD=password
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - airflow_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U airflow_user -d airflow" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+#############################################
+#              APPLICATION DB               #
+#############################################
+  application-db:
+    image: postgres:16-alpine
+    container_name: application-postgres
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${APP_DB_USER}
+      POSTGRES_PASSWORD: ${APP_DB_PASSWORD}
+      POSTGRES_DB: ${APP_DB_NAME}
+      POSTGRES_HOST_AUTH_METHOD: "password"
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    ports:
+      - "5432:5432"
+    volumes:
+      - app_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U \"$APP_DB_USER\" -d \"$APP_DB_NAME\"" ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - rag-network
+#############################################
+#             APPLICATION API               #
+#############################################
+  backend:
+    container_name: BackendAPI
+    env_file:
+      - .env
+    environment:
+      APP__DB__SQL_ALCHEMY_CONN: "postgresql+psycopg2://$APP_DB_USER:$APP_DB_PASSWORD@application-db:5432/$APP_DB_NAME"
+    depends_on:
+      application-db:
+        condition: service_healthy
+    build:
+      context: src/
+      dockerfile: Dockerfile
+    ports:
+      - "8005:8005"
+    command: >
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"
+    volumes:
+      - ./src:/app
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8005/healthcheck" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    networks:
+      - rag-network
+###############################################
+volumes:
+  app_db_data:
+  airflow_db_data:
+  airflow_logs:
+
+networks:
+  rag-network:
+    driver: bridge
