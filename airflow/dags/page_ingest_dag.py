@@ -138,6 +138,12 @@ with DAG(
             else:
                 print("No new or updated pages to insert.")
 
+            # Step 4: Delete removed pages
+            removed_page_ids = set(existing_data.keys()) - set(page["page_id"] for page in processed_pages)
+            if removed_page_ids:
+                print(f"Deleting {len(removed_page_ids)} removed pages from the database: {removed_page_ids}")
+                connection.execute(table.delete().where(table.c.page_id.in_(removed_page_ids)))
+
 
     # Task dependencies using dynamic task mapping
     list_of_page_ids_per_space = get_pages_for_space.expand(space_key=spaces_list)
