@@ -1,6 +1,6 @@
 sqlalchemy
 python-dotenv
-airflow==2.10.0
+apache-airflow==2.10.0
 requests
 fastapi[standard]
 SQLAlchemy
@@ -9,3 +9,6 @@ cryptography
 pytest
 httpx
 pyjwt
+qdrant-client>=1.11.0
+fastembed>=0.3.2
+langchain-qdrant

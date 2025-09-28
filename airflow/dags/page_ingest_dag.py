@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from airflow import DAG
 from airflow.decorators import task
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 import os
 from sqlalchemy import create_engine, MetaData, Table, select
 from AtlassianAPIWrapper import SpaceMetadata, PageMetadata
@@ -128,7 +129,7 @@ with DAG(
                         "created_at": page["created_at"],
                         "updated_at": page["updated_at"],
                         "version_number": page["version_number"],
-                        "markdown": page["markdown"],
+                        "markdown": f"TITLE [{page['title']}]\n\n{page['markdown']}",
                     })
 
             # Step 3: Insert only the new or updated pages
@@ -149,4 +150,10 @@ with DAG(
     list_of_page_ids_per_space = get_pages_for_space.expand(space_key=spaces_list)
     flattened_page_ids = flatten_page_ids(list_of_page_ids_per_space)
     transformed_data = extract_and_transform_page_data.expand(page_id=flattened_page_ids)
-    load_pages_to_postgres(processed_pages=transformed_data)
+    load_pages_to_postgres_task = load_pages_to_postgres(processed_pages=transformed_data)
+
+    trigger_next_dag = TriggerDagRunOperator(task_id="Trigger_Indexing",
+                                             trigger_dag_id="Index_Confluence_Content",
+                                             conf={"message": "Triggering from Ingest DAG"},
+                                             wait_for_completion=False)
+    load_pages_to_postgres_task >> trigger_next_dag

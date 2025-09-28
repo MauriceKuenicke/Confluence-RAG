@@ -1,10 +1,12 @@
 # Confluence RAG
 
 ## High-level Architecture
-This project ingests Confluence content and exposes it for downstream applications via a simple backend API. At a glance:
-- Airflow orchestrates the ingestion pipeline: discovering pages in specified Confluence spaces, extracting content, converting it to Markdown, and loading it selectively into the application database based on version changes.
+This project ingests Confluence content, indexes it for retrieval, and exposes search via a simple backend API. At a glance:
+- Airflow orchestrates two pipelines:
+  - Ingest: discover pages in specified Confluence spaces, extract content, convert to Markdown, and selectively load into the application database based on version changes.
+  - Index: read the current pages from the application DB and keep the Qdrant vector store in sync (add/update/delete) based on page versions.
 - Two Postgres instances are used: one for Airflow's own metadata and one for the application data (ingested pages).
-- A FastAPI backend provides a thin API layer on top of the application database. Alembic ensures DB schema migrations run on startup.
+- A FastAPI backend provides a thin API layer and exposes a /search endpoint that queries Qdrant via LangChain using sparse BM25 retrieval. Alembic ensures DB schema migrations run on startup.
 - Everything is containerized and wired together via Docker Compose.
 
 ```mermaid
@@ -12,25 +14,31 @@ flowchart LR
   A[Confluence Cloud] -->|REST API| B[Airflow DAG: Ingest_Space_Pages]
   B --> B1[Get space pages]
   B1 --> B2[Extract & transform to Markdown]
-  B2 --> |Selective Load based on Version| D[(Application Postgres)]
+  B2 -->|Selective Load using version check| D[(Application Postgres)]
+  B -->|trigger| C[Airflow DAG: Index_Confluence_Content]
+  C -->|Sync add/update/delete| Q[Qdrant Vector DB]
+  D -->|Load Current Documents| C
 
   subgraph Airflow Runtime
     direction TB
     B
     B1
     B2
+    C
   end
 
   B --> E[(Airflow Postgres)]
 
-  F[FastAPI Backend API] -->|SQLAlchemy| D
+  F[FastAPI Backend API] -->|/search via LangChain BM25 sparse| Q
   U[Users / Integrations] -->|HTTP| F
 ```
 
 Key data flow:
-- Confluence -> Airflow: Page metadata and HTML content fetched via REST.
-- Airflow -> App DB: Only new/updated pages inserted (checked by page version).
-- Backend API -> Clients: Read-only access to stored pages and healthchecks.
+- Confluence -> Airflow (Ingest): Page metadata and HTML content fetched via REST.
+- Airflow (Ingest) -> App DB: Only new/updated pages inserted (checked by page version).
+- App DB -> Airflow (Index) -> Qdrant: Indexing keeps Qdrant synchronized (adds, updates, deletes) by version.
+- FastAPI -> Qdrant: /search queries Qdrant using sparse BM25 retrieval; responses returned to clients.
+- Backend API -> Clients: Read-only access and healthchecks.
 
 ## Services Description & Availability
 
@@ -40,6 +48,7 @@ Key data flow:
 | Airflow Backend DB (Postgres)     | Not Exposed |
 | Application Backend DB (Postgres) | 5432        |
 | Application API (FastAPI)         | 8005        |
+| Qdrant Vector DB                  | 6333        |
 
 
 The Airflow logs as well as the Postgres database data are managed using named

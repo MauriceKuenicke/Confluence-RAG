@@ -14,6 +14,8 @@ services:
       - .env
     environment:
       APP__DB__SQL_ALCHEMY_CONN: "postgresql+psycopg2://$APP_DB_USER:$APP_DB_PASSWORD@application-db:5432/$APP_DB_NAME"
+      APP__VEC__QDRANT_URL: "http://qdrant:6333"
+      APP__VEC__QDRANT_API_KEY: ${QDRANT_API_KEY}
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow_user:airflow_password@airflow-db:5432/airflow"
       AIRFLOW__CORE__DEFAULT_TIMEZONE: "Europe/Berlin"
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
@@ -35,6 +37,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 120s
+    restart: unless-stopped
     networks:
       - rag-network
 #############################################
@@ -96,6 +99,8 @@ services:
       - .env
     environment:
       APP__DB__SQL_ALCHEMY_CONN: "postgresql+psycopg2://$APP_DB_USER:$APP_DB_PASSWORD@application-db:5432/$APP_DB_NAME"
+      APP__VEC__QDRANT_URL: "http://qdrant:6333"
+      APP__VEC__QDRANT_API_KEY: ${QDRANT_API_KEY}
     depends_on:
       application-db:
         condition: service_healthy
@@ -105,7 +110,7 @@ services:
     ports:
       - "8005:8005"
     command: >
-      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload"
+      sh -c "uvicorn app.main:app --host 0.0.0.0 --port 8005 --reload --log-level info"
     volumes:
       - ./src:/app
     healthcheck:
@@ -116,11 +121,29 @@ services:
       start_period: 120s
     networks:
       - rag-network
-###############################################
+#############################################
+#              QDRANT INSTANCE              #
+#############################################
+  qdrant:
+    image: qdrant/qdrant
+    container_name: Qdrant-VectorDB
+    env_file:
+      - .env
+    environment:
+      QDRANT__SERVICE__API_KEY: ${QDRANT_API_KEY}
+    volumes:
+      - qdrant_data:/qdrant/storage:z
+    ports:
+      - "6333:6333"
+    restart: unless-stopped
+    networks:
+      - rag-network
+#############################################
 volumes:
   app_db_data:
   airflow_db_data:
   airflow_logs:
+  qdrant_data:
 
 networks:
   rag-network:
