@@ -6,6 +6,11 @@ from langchain_qdrant import FastEmbedSparse, QdrantVectorStore, RetrievalMode
 import sys
 import logging
 import os
+from fastembed.rerank.cross_encoder import TextCrossEncoder
+
+encoder_name = "sentence-transformers/all-MiniLM-L6-v2"
+reranker = TextCrossEncoder(model_name='jinaai/jina-reranker-v2-base-multilingual')
+
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -38,7 +43,13 @@ def search(query: str):
         sparse_vector_name="sparse_content",
     )
 
-    found_docs = qdrant.similarity_search(query)
+    found_docs = qdrant.similarity_search(query, k=5)
+
+    description_hits = [x.page_content for x in found_docs]
+    new_scores = list(reranker.rerank(query, description_hits))
+    ranking = [(i, score) for i, score in enumerate(new_scores)]
+    ranking.sort(key=lambda x: x[1], reverse=True)
+    found_docs = [found_docs[i] for i, _ in ranking]
     return found_docs
 
 if "pytest" not in sys.modules:

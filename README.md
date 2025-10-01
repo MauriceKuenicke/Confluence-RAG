@@ -29,7 +29,7 @@ flowchart LR
 
   B --> E[(Airflow Postgres)]
 
-  F[FastAPI Backend API] -->|/search via LangChain BM25 sparse| Q
+  F[FastAPI Backend API] -->|/search via LangChain BM25 sparse + Re-Ranking| Q
   U[Users / Integrations] -->|HTTP| F
 ```
 
