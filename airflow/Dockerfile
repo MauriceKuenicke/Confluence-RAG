@@ -40,7 +40,8 @@ RUN pip install --no-cache-dir -r /tmp/requirements-airflow.txt
 
 # Copy and set up entrypoint script
 COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    sed -i 's/\r$//'
 
 # Switch to airflow user and set working directory
 USER airflow

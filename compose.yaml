@@ -19,6 +19,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: "postgresql+psycopg2://airflow_user:airflow_password@airflow-db:5432/airflow"
       AIRFLOW__CORE__DEFAULT_TIMEZONE: "Europe/Berlin"
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__MAX_MAP_LENGTH: 5000
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "true"
       AIRFLOW__CORE__EXECUTOR: "LocalExecutor"
       AIRFLOW_HOME: "/opt/airflow"

@@ -80,6 +80,8 @@ with DAG(
         page = PageMetadata(page_id)
         print("Page extraction successful. Converting content to Markdown...")
         markdown_converter = html2text.html2text(page.raw_content)
+        if markdown_converter.replace("\n", "") == "":
+            return None
         page_data = {"page_id": page.page_id,
                      "title": page.title,
                      "space_id": page.space_id,

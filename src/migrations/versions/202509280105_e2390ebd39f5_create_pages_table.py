@@ -20,10 +20,10 @@ depends_on: Union[str, Sequence[str], None] = None
 def upgrade() -> None:
     op.execute("""
         CREATE TABLE confluence_pages (
-            page_id INTEGER NOT NULL,
+            page_id BIGINT NOT NULL,
             title TEXT NOT NULL,
             markdown TEXT NOT NULL,
-            space_id INTEGER NOT NULL,
+            space_id BIGINT NOT NULL,
             version_number INTEGER NOT NULL,
             created_at TIMESTAMP NOT NULL,
             updated_at TIMESTAMP NOT NULL,
