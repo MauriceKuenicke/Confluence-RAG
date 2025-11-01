@@ -9,7 +9,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = 'a242gbz32a5'
 down_revision: Union[str, None] = 'e2390ebd39f5'
@@ -23,6 +22,7 @@ def upgrade() -> None:
             WITH latest_pages AS (
                 SELECT page_id,
                        title,
+                       page_url,
                        space_id,
                        created_at,
                        updated_at,
@@ -33,6 +33,7 @@ def upgrade() -> None:
                 )
             SELECT page_id,
                    title,
+                   page_url,
                    space_id,
                    created_at,
                    updated_at,

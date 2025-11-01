@@ -42,13 +42,13 @@ Key data flow:
 
 ## Services Description & Availability
 
-| **Service**                       | **Port**    |
-|-----------------------------------|-------------|
-| Airflow UI                        | 8080        |
-| Airflow Backend DB (Postgres)     | Not Exposed |
-| Application Backend DB (Postgres) | 5432        |
-| Application API (FastAPI)         | 8005        |
-| Qdrant Vector DB                  | 6333        |
+| **Service**                       | **Port**       |
+|-----------------------------------|----------------|
+| Airflow UI                        | 8080           |
+| Airflow Backend DB (Postgres)     | Not Exposed    |
+| Application Backend DB (Postgres) | 5432           |
+| Application API (FastAPI)         | 8005/api/docs  |
+| Qdrant Vector DB                  | 6333/dashboard |
 
 
 The Airflow logs as well as the Postgres database data are managed using named

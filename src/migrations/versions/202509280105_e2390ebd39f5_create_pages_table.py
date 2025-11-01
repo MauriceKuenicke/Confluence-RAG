@@ -9,7 +9,6 @@ from typing import Sequence, Union
 
 from alembic import op
 
-
 # revision identifiers, used by Alembic.
 revision: str = 'e2390ebd39f5'
 down_revision: Union[str, None] = None
@@ -22,6 +21,7 @@ def upgrade() -> None:
         CREATE TABLE confluence_pages (
             page_id BIGINT NOT NULL,
             title TEXT NOT NULL,
+            page_url TEXT NOT NULL,
             markdown TEXT NOT NULL,
             space_id BIGINT NOT NULL,
             version_number INTEGER NOT NULL,

@@ -1,15 +1,16 @@
+import os
+import random
+import time
 from datetime import datetime, timedelta
+from typing import Any
+
+import html2text
 from airflow import DAG
 from airflow.decorators import task
 from airflow.operators.trigger_dagrun import TriggerDagRunOperator
-import os
 from sqlalchemy import create_engine, MetaData, Table, select
-from AtlassianAPIWrapper import SpaceMetadata, PageMetadata
-import html2text
-import time
-import random
-from typing import Any
 
+from AtlassianAPIWrapper import SpaceMetadata, PageMetadata
 
 default_args = {
     "owner": "RAG",
@@ -88,6 +89,7 @@ with DAG(
                      "created_at": page.created_at,
                      "updated_at": page.updated_at,
                      "version_number": page.version_number,
+                     "url": page.page_url,
                      "markdown": markdown_converter}
         return page_data
 
@@ -131,7 +133,8 @@ with DAG(
                         "created_at": page["created_at"],
                         "updated_at": page["updated_at"],
                         "version_number": page["version_number"],
-                        "markdown": f"TITLE [{page['title']}]\n\n{page['markdown']}",
+                        "page_url": page["url"],
+                        "markdown": page['markdown'],
                     })
 
             # Step 3: Insert only the new or updated pages

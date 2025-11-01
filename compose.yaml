@@ -102,6 +102,7 @@ services:
       APP__DB__SQL_ALCHEMY_CONN: "postgresql+psycopg2://$APP_DB_USER:$APP_DB_PASSWORD@application-db:5432/$APP_DB_NAME"
       APP__VEC__QDRANT_URL: "http://qdrant:6333"
       APP__VEC__QDRANT_API_KEY: ${QDRANT_API_KEY}
+      APP__LLM_API_KEY: ${LLM_API_KEY}
     depends_on:
       application-db:
         condition: service_healthy

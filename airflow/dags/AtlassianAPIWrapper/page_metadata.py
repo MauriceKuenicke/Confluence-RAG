@@ -1,9 +1,12 @@
+import json
+import os
+from typing import Any
+
 import requests
 from requests.auth import HTTPBasicAuth
+
 from .endpoints import PAGE_METADATA_ENDPOINT
-import os
-import json
-from typing import Any
+
 
 class PageMetadata:
     def __init__(self, page_id: int) -> None:
@@ -50,3 +53,9 @@ class PageMetadata:
     @property
     def metadata_url(self) -> str:
         return self._metadata_request_url
+
+    @property
+    def page_url(self) -> str:
+        base_url = self._pages_metadata["_links"]["base"]
+        page_url = self._pages_metadata["_links"]["webui"]
+        return f"{base_url}{page_url}"

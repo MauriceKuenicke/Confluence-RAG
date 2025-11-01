@@ -10,3 +10,4 @@ pyjwt
 qdrant-client>=1.11.0
 fastembed>=0.3.2
 langchain-qdrant
+openai
